@@ -8,6 +8,7 @@ var config = {
         key: 'main',
         preload: preload,
         create: create,
+        update: update,
     }
 };
 
@@ -165,15 +166,17 @@ function Character(name,hp,ap,acc,dodge,mspd,exp,giveexp,ally,active,pos) {
         })
     };
 
-    this.moveto = function(targetrow,targetcol){ 
-        this.pos = [targetrow,targetcol]
+    this.moveto = function(target){ 
+
+        // this.pos = [targetrow,targetcol]
         var absPos = TilePostoPos(this.pos)
-        this.img.x = absPos[1]
-        this.img.y = absPos[0]
+
 
     };
 }
 
+var tweenX;
+var tweenY;
 var Chamomile = new Character('Chamomile',100,40,90,20,4,0,0,true, true, [0,0])
 var Earl = new Character('Earl',120,30,80,20,4,0,0,true, true, [9,7])
 var Ceylon = new Character('Ceylon',200,70,50,20,4,0,0,true, true, [7,9])
@@ -184,6 +187,9 @@ var allies = [Chamomile,Earl,Ceylon]
 var player;
 var cursor;
 var layer;
+var colorBlue;
+var colorRed;
+var base;
 
 
 function preload(){
@@ -192,13 +198,26 @@ function preload(){
     this.load.image('cursor','assets/images/Sprites/Cursor.png')
     this.load.image('Chamomile','assets/images/Sprites/Chamomile.png')
     this.load.image('Earl','assets/images/Sprites/Earl.png')
-    this.load.image('colorRed','assets/images/Sprites/')
+    this.load.image('colorBlue','assets/images/Tiles/colorBlue.png')
+    this.load.image('colorRed','assets/images/Tiles/colorRed.png')
 }
 
 function create(){
+    base = this
+    tween = this.tweens.addCounter({
+        from: 100,
+        to: 200,
+        duration: 5000,
+        yoyo: true
+    });
+
+    colorRed = this.add.group()
+    colorBlue = this.add.group();
     map = this.make.tilemap({key: 'map'})
     var tileset = map.addTilesetImage('Tileset');
+    
     layer = map.createStaticLayer('Tile Layer 1',tileset,0,0);
+    layer.setDepth(-2)
     cursor = this.add.image(0+8,0+8,'cursor');
 
     Chamomile.img = this.add.image(0+8,0+8,'Chamomile');
@@ -208,7 +227,6 @@ function create(){
     });
 
     this.input.keyboard.on('keydown_RIGHT', function (event) {
-        Chamomile.moveto(Chamomile.pos[0],Chamomile.pos[1] + 1)
         cursor.x = Math.min(160-8,cursor.x + 16);
     });
 
@@ -221,10 +239,19 @@ function create(){
     });
 
     this.input.keyboard.on('keydown_ENTER', function(event){
-        Chamomile.img.x = cursor.x
-        Chamomile.img.y = cursor.y
-        Chamomile.pos = PostoTilePos([cursor.y,cursor.x])
+
+        // Chamomile.img.x = cursor.x
+        // Chamomile.img.y = cursor.y
+        
+        Chamomile.pos = PostoTilePos([cursor.x,cursor.y])
+        Chamomile.moveto(Chamomile.pos)
     });
+    text = this.add.text(30, 20, '0', { font: '16px Courier', fill: '#00ff00' });
+
+}
+
+
+function update (){
 }
 
 ////UTILITY FUNCTIONS////////
@@ -235,10 +262,38 @@ function TilePostoPos(tilepos){
     return [tilepos[0]*16 + 8,tilepos[1]*16 + 8]
 }
 
+function getTileWeight(gridPos){
+    var absPos = TilePostoPos(gridPos)
+    if (layer.getTileAtWorldXY(absPos[0],absPos[1]) == null){
+        return 99
+    }
+    return layer.getTileAtWorldXY(absPos[0],absPos[1]).properties.weight
+}
+
+function parseKey(key,delimiter){ //Parse through our custom ID tag to determine location of target box
+    var row = ''
+    var col = ''
+    var toggle = 0
+    for (var i = 0;i<key.length;i++){
+        if (key[i] == delimiter){
+            toggle = 1
+        }
+        else if(toggle == 0){
+            row += key[i]
+        }
+        else{
+            col += key[i]
+        }
+    }
+    return [+row,+col]
+    
+}
+
 function showMoves(character){
-    function findPath(start,mspd,map){ 
+    var possibleAttacks = {}
+    function findPath(start,mspd){ 
         //Flood fill algorithm to determine valid moves
-        updateAllyTileWeights() 
+        // updateAllyTileWeights() 
         //Create object Path that will eventually store the stepsLeft and a pathTaken to a tile
         function Path(stepsLeft,pathTaken){
             this.stepsLeft = stepsLeft;
@@ -268,8 +323,9 @@ function showMoves(character){
             
             //For every neighbor
             neighbors.forEach(function(neighbor){
+                possibleAttacks[neighbor] = 1
                 //Calculate how many steps are left if the neighbor is moved into
-                tentativeStepsLeft = travelmap[curr].stepsLeft - map[neighbor]
+                tentativeStepsLeft = travelmap[curr].stepsLeft - getTileWeight(neighbor)
                 //If we've already calculated this tile, only replace it in the travel map if it requires less steps
                 if (neighbor in travelmap){
                     if (tentativeStepsLeft > travelmap[neighbor].stepsLeft){
@@ -277,41 +333,63 @@ function showMoves(character){
                     }
                 }
                 //Otherwise if you do not have enough steps to move into neighbor do nothing
-                else if (travelmap[curr].stepsLeft - map[neighbor] < 0){
+                else if (travelmap[curr].stepsLeft - getTileWeight(neighbor) < 0){
                 }
                 //If you have exactly enough steps push it to the closedset
-                else if (travelmap[curr].stepsLeft - map[neighbor] == 0){
-                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - map[neighbor], travelmap[curr].pathTaken.concat([neighbor]))
+                else if (travelmap[curr].stepsLeft - getTileWeight(neighbor) == 0){
+                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - getTileWeight(neighbor), travelmap[curr].pathTaken.concat([neighbor]))
                     closedset.push(neighbor)
                 }
                 else{
                 //If the tile has not been previously calculated and it is possible to move into it with steps remaining
                 //Put that tile in the Open Set and log its Path in the map.
                     openset.push(neighbor)
-                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - map[neighbor], travelmap[curr].pathTaken.concat([neighbor]))
+                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - getTileWeight(neighbor), travelmap[curr].pathTaken.concat([neighbor]))
                 }
             })
         }
+        ///Determine where valid attacks are
+        closedset.forEach(function(curr){
+            var neighbors = [[curr[0] + 1,curr[1]],[curr[0],curr[1]+1],[curr[0]-1,curr[1]],[curr[0],curr[1]-1] ]
+            neighbors.forEach(function(neighbor){
+                possibleAttacks[neighbor] = 1
+            })
+        })
     
         return travelmap
     }
 
     if (character.ally){
-        var possiblemoves = (findPath(character.pos,character.mspd,allymovemap))
+        var possiblemoves = (findPath(character.pos,character.mspd))
     }
     else{
         var possiblemoves = (findPath(character.pos,character.mspd,enemymovemap))
     }
     //Style all tiles that are part of the possible moves
+    colorBlue.clear(true,true)
+    colorRed.clear(true,true)
     for (var key in possiblemoves){
         var correctedKey = key.slice(0,key.indexOf(',')) + '\\' + key.slice(key.indexOf(','))
         if (character.ally == false){
             $('#'+correctedKey).addClass('enemyMovement')
         }
         else{
-            $('#'+correctedKey).addClass('movement')
-        }
-    character.moves = possiblemoves
-    }
-}
+            var tile = TilePostoPos(parseKey(key,','))
+            colorBlue.create(tile[0],tile[1],'colorBlue')
 
+        }
+
+    }
+    for (var key in possibleAttacks){
+        if (!(key in possiblemoves)){
+            var tile = TilePostoPos(parseKey(key,','))
+            colorRed.create(tile[0],tile[1],'colorRed')
+
+        }
+
+    }
+
+    character.moves = possiblemoves
+    colorBlue.setDepth(-1)
+    colorRed.setDepth(-1)
+}

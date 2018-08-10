@@ -29,6 +29,52 @@
          "spacing":0,
          "tilecount":10,
          "tileheight":16,
+         "tileproperties":
+            {
+             "0":
+                {
+                 "weight":1
+                },
+             "1":
+                {
+                 "weight":2
+                },
+             "2":
+                {
+                 "weight":3
+                },
+             "3":
+                {
+                 "weight":1
+                },
+             "4":
+                {
+                 "weight":1
+                }
+            },
+         "tilepropertytypes":
+            {
+             "0":
+                {
+                 "weight":"int"
+                },
+             "1":
+                {
+                 "weight":"int"
+                },
+             "2":
+                {
+                 "weight":"int"
+                },
+             "3":
+                {
+                 "weight":"int"
+                },
+             "4":
+                {
+                 "weight":"int"
+                }
+            },
          "tilewidth":16
         }],
  "tilewidth":16,

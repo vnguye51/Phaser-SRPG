@@ -2,6 +2,31 @@
 <map version="1.0" tiledversion="1.1.6" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="16" tileheight="16" infinite="0" nextobjectid="1">
  <tileset firstgid="1" name="Tileset" tilewidth="16" tileheight="16" tilecount="10" columns="10">
   <image source="Tileset.png" width="160" height="16"/>
+  <tile id="0">
+   <properties>
+    <property name="weight" type="int" value="1"/>
+   </properties>
+  </tile>
+  <tile id="1">
+   <properties>
+    <property name="weight" type="int" value="2"/>
+   </properties>
+  </tile>
+  <tile id="2">
+   <properties>
+    <property name="weight" type="int" value="3"/>
+   </properties>
+  </tile>
+  <tile id="3">
+   <properties>
+    <property name="weight" type="int" value="1"/>
+   </properties>
+  </tile>
+  <tile id="4">
+   <properties>
+    <property name="weight" type="int" value="1"/>
+   </properties>
+  </tile>
  </tileset>
  <layer name="Tile Layer 1" width="10" height="10">
   <data encoding="csv">
