@@ -167,7 +167,6 @@ function Character(name,hp,ap,acc,dodge,mspd,exp,giveexp,ally,active,pos) {
     };
 
     this.moveto = function(target){ 
-
         // this.pos = [targetrow,targetcol]
         var absPos = TilePostoPos(this.pos)
 
@@ -175,8 +174,7 @@ function Character(name,hp,ap,acc,dodge,mspd,exp,giveexp,ally,active,pos) {
     };
 }
 
-var tweenX;
-var tweenY;
+
 var Chamomile = new Character('Chamomile',100,40,90,20,4,0,0,true, true, [0,0])
 var Earl = new Character('Earl',120,30,80,20,4,0,0,true, true, [9,7])
 var Ceylon = new Character('Ceylon',200,70,50,20,4,0,0,true, true, [7,9])
@@ -190,6 +188,7 @@ var layer;
 var colorBlue;
 var colorRed;
 var base;
+var tweenRef;
 
 
 function preload(){
@@ -204,12 +203,8 @@ function preload(){
 
 function create(){
     base = this
-    tween = this.tweens.addCounter({
-        from: 100,
-        to: 200,
-        duration: 5000,
-        yoyo: true
-    });
+///TWEENDATA
+
 
     colorRed = this.add.group()
     colorBlue = this.add.group();
@@ -221,7 +216,34 @@ function create(){
     cursor = this.add.image(0+8,0+8,'cursor');
 
     Chamomile.img = this.add.image(0+8,0+8,'Chamomile');
+    ///Initialize TWEENS///
+    tweenRef = this.tweens
 
+    var tweenRight = ({
+        targets: Chamomile.img,
+        x: '+=16',
+        duration: 250,
+    })
+
+    var tweenLeft = ({
+        targets: Chamomile.img,
+        x: '-=16',
+        duration: 250,
+    })
+
+    var tweenUp = ({
+        targets: Chamomile.img,
+        y: '-=16',
+        duration: 250,
+    })
+
+    var tweenDown = ({
+        targets: Chamomile.img,
+        y: '+=16',
+        duration: 250,
+    })
+
+////////////
     this.input.keyboard.on('keydown_LEFT', function (event) {
         cursor.x = Math.max(0+8,cursor.x-16);
     });
@@ -244,7 +266,8 @@ function create(){
         // Chamomile.img.y = cursor.y
         
         Chamomile.pos = PostoTilePos([cursor.x,cursor.y])
-        Chamomile.moveto(Chamomile.pos)
+        // Chamomile.moveto(Chamomile.pos)
+        tweenRef.add(tweenDown)
     });
     text = this.add.text(30, 20, '0', { font: '16px Courier', fill: '#00ff00' });
 
@@ -253,6 +276,8 @@ function create(){
 
 function update (){
 }
+
+
 
 ////UTILITY FUNCTIONS////////
 function PostoTilePos(pos){
@@ -376,15 +401,12 @@ function showMoves(character){
         else{
             var tile = TilePostoPos(parseKey(key,','))
             colorBlue.create(tile[0],tile[1],'colorBlue')
-
         }
-
     }
     for (var key in possibleAttacks){
         if (!(key in possiblemoves)){
             var tile = TilePostoPos(parseKey(key,','))
             colorRed.create(tile[0],tile[1],'colorRed')
-
         }
 
     }
