@@ -665,7 +665,6 @@ function enemyTurn(){
     var i = 0
 
     function moveNext(i){
-        console.log(i)
         //Wait for each enemy to finish moving before moving onto the next enemy
         //Recursive promises
         if (i < enemies.length){

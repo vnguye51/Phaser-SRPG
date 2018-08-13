@@ -126,7 +126,18 @@ tile next to the player
 *Labels do not have a priority
 
 THINGS TO ADD:
-* link to instruction page
+* healthbar
+* manually place text(currently gets moved due to replacing the text with less characters)
+* Undo Move
 * stock image(emblem?) for enemies and allies
-* link to the basic game
 * updatetileweights are probably being called too often
+* SFX
+* Ally info should always appear on left and enemy always on the right
+
+*Low priority:
+	*Make attackmenu responsive to how many options are valid
+	*grab pixelart fonts from opengameart
+	*Optimization:
+		* Consider turning the enemies and allies arrays into objects and stop looping through them
+		* Menu scenes are being recreated each time. 
+	* rename attackmenu to battlemenu

@@ -1,23 +1,27 @@
 var config = {
     type: Phaser.AUTO,
-    width: 160,
+    width: 240,
     height: 160,
     pixelArt: true,
     backgroundColor: '#2d2d2d',
-    scene: {
+    scene: [{
         key: 'main',
+        active: true,
         preload: preload,
         create: create,
         update: update,
-    }
+    },attackMenu,attackStats]
 };
 
-function Character(name,hp,ap,acc,dodge,mspd,exp,giveexp,ally,active,pos) {
+function Character(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
     this.name = name;
     this.hp = hp;
-    this.ap = ap;
+    this.atk = atk;
+    this.def = def;
     this.acc = acc;
-    this.dodge = dodge;//unused so far
+    this.avo = avo;//unused so far
+    this.crt = crit
+
     this.mspd = mspd;
     this.moves = null;
 
@@ -39,149 +43,85 @@ function Character(name,hp,ap,acc,dodge,mspd,exp,giveexp,ally,active,pos) {
         
         printMessage(this.name + " leveled up!" )
         this.acc += 10
-        this.dodge += 10
+        this.avo += 10
         this.mspd += 1
         this.ap += 10
         this.exp -= 100
     }
 
-    this.attack = function(target){
-        //Attack logic
-        //Initial attack animations(can probably turn this into a function)
-        if(target.pos[0] == this.pos[0] - 1){
-            $(this.ref).animate({bottom:'50px'},250)
-            $(this.ref).animate({bottom:'0px'},250)
-        }
-        else if (target.pos[0] == this.pos[0] + 1){
-            $(this.ref).animate({top:'50px'},250)
-            $(this.ref).animate({top:'0px'},250)
-        }
-        else if (target.pos[1] == this.pos[1] + 1){
-            $(this.ref).animate({left:'50px'},250)
-            $(this.ref).animate({left:'0px'},250)
-        }
-        else if (target.pos[1] == this.pos[1] - 1){
-            $(this.ref).animate({right:'50px'},250)
-            $(this.ref).animate({right:'0px'},250)
-        }
-
-        var hitroll = Math.floor(Math.random()*100) 
-        var enemyroll = Math.floor(Math.random()*100)
-
-        if (this.acc > hitroll){
-            //If you hit
-            printMessage(this.name + ' attacks '+  target.name + ' dealing ' + this.ap + ' damage.')
-            hitSound.play()
-            target.hp = Math.max(target.hp-this.ap,0)
-            if (target.hp <= 0) { 
-                printMessage(this.name + ' deals a lethal blow to ' + target.name)
-                removeChar(target)
-                this.exp += target.giveexp
-                if (this.exp >= 100){
-                    this.levelup()
-                } 
-                
-                if (target.ally == false){ //Ally  killed enemy
-                    if (enemies.length == 0){
-                        //All enemies defeated //Should make a victory() function
-                        phase = 'Victory'
-                        printLabel('VICTORY')
-                        printMessage("You have defeated all enemies!")
-                    }
-                }
-                else{
-                    if (allies.length == 0){
-                        //All allies defeated //Should make a defeat() function
-                        phase = 'GameOver'
-                        printLabel('DEFEAT')
-                        printMessage("All allies have been slain.")      
-                    }
-                }
-            }
-        }
-
-        else {
-            //attack misses
-            missSound.play()
-            printMessage(this.name + ' attacks but ' + target.name + ' parries!')
-        }
-
-        $(this.ref).promise().done(function(){
-            //promise waits until the initial attack animation is done
-            //Counterattack animation
-            if(this.data().pos[0] == target.pos[0] - 1){
-                $(target.ref).animate({bottom:'50px'},250)
-                $(target.ref).animate({bottom:'0px'},250)
-            }
-            else if (this.data().pos[0] == target.pos[0] + 1){
-                $(target.ref).animate({top:'50px'},250)
-                $(target.ref).animate({top:'0px'},250)
-            }
-            else if (this.data().pos[1] == target.pos[1] + 1){
-                $(target.ref).animate({left:'50px'},250)
-                $(target.ref).animate({left:'0px'},250)
-            }
-            else if (this.data().pos[1] == target.pos[1] - 1){
-                $(target.ref).animate({right:'50px'},250)
-                $(target.ref).animate({right:'0px'},250)
-            }
-
-            if ((target.acc > enemyroll) && (target.hp > 0)) {
-                //counterattack lands
-                hitSound.play()
-                this.data().hp = Math.max(this.data().hp-target.ap,0)
-                printMessage(target.name + ' lands the riposte dealing ' + target.ap + ' damage.')
-                if (this.data().hp <= 0) {
-                    printMessage(target.name + ' deals a lethal blow to ' +this.data().name )
-                    target.exp += this.data().giveexp
-                    removeChar(this.data())
-
-                    if (target.exp >= 100){
-                        target.levelup()
-                    }
-                    if (this.data().ally == false){ //Ally  killed enemy
-                        if (enemies.length == 0){
-                            phase = 'Victory'
-                            printLabel('VICTORY')
-                            printMessage("You have defeated all enemies!")
-                        }
-                    }
-                    else{
-                        if (allies.length == 0){
-                            phase = 'GameOver'
-                            printLabel('DEFEAT')
-                            printMessage("All allies have been slain.")
-                        }
-                    }
-                }
-            }
-        
-            else if (target.hp > 0){
-                //counterattack misses
-                missSound.play()
-                printMessage(target.name + ' misses the riposte!')
-            }
-            statupdate(target)
-            statupdate(this.data())
-        })
-    };
-
     this.moveto = function(target){ 
-        // this.pos = [targetrow,targetcol]
-        var absPos = TilePostoPos(this.pos)
+        delete charPosKeys[this.pos]
+
+        path = this.moves[target].pathTaken
+        var tweens = []
+        var prev = this.pos
+        
+        for(var i = 0;i<path.length;i++){
+            if(prev[0]-1 == path[i][0]){
+                tweens.push({x: '-=16',duration:200,ease:'linear'})
+            }
+            else if (prev[0]+1 == path[i][0]){
+                tweens.push({x: '+=16',duration:200,ease:'linear'})
+            }
+            else if (prev[1]+1 == path[i][1]){
+                tweens.push({y: '+=16',duration:200,ease:'linear'})
+            }
+            else if (prev[1]-1 == path[i][1]){
+                tweens.push({y: '-=16',duration:200,ease:'linear'})
+            }
+            prev = path[i]
+        }
+        var timeline = base.tweens.timeline({
+            targets: this.img,
+            tweens: tweens,
+            onComplete: function(){
+                phase = 'attackConfirm'
+                base.scene.run('attackMenu')
+                showAttacks(charTarget)
+
+            }
+        })      
+        this.pos = PostoTilePos([cursor.x,cursor.y])
+        charPosKeys[this.pos] = this // Store a reference to this object on that tile
 
 
     };
 }
 
 
-var Chamomile = new Character('Chamomile',100,40,90,20,4,0,0,true, true, [0,0])
-var Earl = new Character('Earl',120,30,80,20,4,0,0,true, true, [9,7])
-var Ceylon = new Character('Ceylon',200,70,50,20,4,0,0,true, true, [7,9])
+
+
+var charPosKeys = {}
+
+//name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos
+
+var Chamomile = new Character('Chamomile',100,200,10,90,20,15,4,0,0,true, true, [1,1])
+charPosKeys[Chamomile.pos] = Chamomile
+
+var Earl = new Character('Earl',120,30,20,80,20,10,4,0,0,true, true, [2,1])
+charPosKeys[Earl.pos] = Earl
+
+var Ceylon = new Character('Ceylon',200,70,10,50,20,5,4,0,0,true, true, [3,1])
+charPosKeys[Ceylon.pos] = Ceylon
+
+var SpearSkeleton1 = new Character('Spear Skeleton',100,200,10,80,20,1,4,0,50,false, false, [4,1])
+charPosKeys[SpearSkeleton1.pos] = SpearSkeleton1
+
+var AxeSkeleton1 = new Character('Axe Skeleton',150,40,10,60,10,1,4,0,50,false, false, [3,2])
+charPosKeys[AxeSkeleton1.pos] = AxeSkeleton1
+
 
 
 var game = new Phaser.Game(config);
 var allies = [Chamomile,Earl,Ceylon]
+var enemies = [SpearSkeleton1,AxeSkeleton1]
+var activeQueue = {}
+for (var i = 0;i<allies.length;i++){
+    activeQueue[(allies[i].name)] = 1
+}
+var phase = 'choose'
+
+
 var player;
 var cursor;
 var layer;
@@ -190,87 +130,169 @@ var colorRed;
 var base;
 var tweenRef;
 
+var toggle = false;//Toggle is temporary boolean for selecttarget/showmove phase
+
+var cursorTarget //Character the cursor is hovering over
+var cursorPos
+var charTarget //Last selected character
+
+var originalTileWeights = {}
+var allymovemap = {} //Tileweights, Store the steps needed to move into a tile in a map
+var enemymovemap = {}
 
 function preload(){
     this.load.image('Tileset', 'assets/TileMap/Tileset.png');
     this.load.tilemapTiledJSON('map','assets/TileMap/Map1.json');
     this.load.image('cursor','assets/images/Sprites/Cursor.png')
+
     this.load.image('Chamomile','assets/images/Sprites/Chamomile.png')
+    this.load.image('ChamomileGrayed','assets/images/Sprites/ChamomileGrayed.png')
     this.load.image('Earl','assets/images/Sprites/Earl.png')
+    this.load.image('EarlGrayed','assets/images/Sprites/EarlGrayed.png')
+    this.load.image('Ceylon','assets/images/Sprites/Ceylon.png')
+    this.load.image('CeylonGrayed','assets/images/Sprites/CeylonGrayed.png')
+
+    this.load.image('AxeSkeleton', 'assets/images/Sprites/AxeSkeleton.png')
+    this.load.image('SpearSkeleton','assets/images/Sprites/SpearSkeleton.png')
+    this.load.image('SwordSkeleton','assets/images/Sprites/SwordSkeleton.png')
+
     this.load.image('colorBlue','assets/images/Tiles/colorBlue.png')
     this.load.image('colorRed','assets/images/Tiles/colorRed.png')
 }
 
 function create(){
+    //Launch parallel scenes(menus) and immediately hide them
+
+    //CAMERA//
+
+    var camera = this.cameras.add(-16,-16,240,160)
+
+
+
     base = this
-///TWEENDATA
+    var _this = this
 
 
-    colorRed = this.add.group()
+    colorRed = this.add.group();
     colorBlue = this.add.group();
+
     map = this.make.tilemap({key: 'map'})
     var tileset = map.addTilesetImage('Tileset');
     
     layer = map.createStaticLayer('Tile Layer 1',tileset,0,0);
     layer.setDepth(-2)
-    cursor = this.add.image(0+8,0+8,'cursor');
+    cursor = this.add.image(16+8,16+8,'cursor');
 
-    Chamomile.img = this.add.image(0+8,0+8,'Chamomile');
-    ///Initialize TWEENS///
-    tweenRef = this.tweens
+    Chamomile.img = this.add.sprite(16+8,16+8,'Chamomile');
+    Earl.img = this.add.sprite(16+24,16+8,'Earl');
+    Ceylon.img = this.add.sprite(16+40,16+8,'Ceylon');
 
-    var tweenRight = ({
-        targets: Chamomile.img,
-        x: '+=16',
-        duration: 250,
-    })
+    SpearSkeleton1.img = this.add.sprite(72,24,'SpearSkeleton')
+    AxeSkeleton1.img = this.add.sprite(56,40,'AxeSkeleton')
 
-    var tweenLeft = ({
-        targets: Chamomile.img,
-        x: '-=16',
-        duration: 250,
-    })
 
-    var tweenUp = ({
-        targets: Chamomile.img,
-        y: '-=16',
-        duration: 250,
-    })
-
-    var tweenDown = ({
-        targets: Chamomile.img,
-        y: '+=16',
-        duration: 250,
-    })
+    ///Grab original tile data from JSON
+    var tiles = layer.layer.data
+    for (var i = 0; i < tiles.length; i++){
+        for (var j = 0; j < tiles[0].length;j++){
+            originalTileWeights[[j,i]] = tiles[i][j].properties.weight
+        }
+    }
+    updateAllyTileWeights()
+    updateEnemyTileWeights()
 
 ////////////
     this.input.keyboard.on('keydown_LEFT', function (event) {
-        cursor.x = Math.max(0+8,cursor.x-16);
+        if (phase != 'attackConfirm'){
+            cursor.x = Math.max(16+8,cursor.x-16);
+            cursorPos = PostoTilePos([cursor.x,cursor.y]);
+            cursorTarget = charPosKeys[cursorPos]
+        }
     });
 
     this.input.keyboard.on('keydown_RIGHT', function (event) {
-        cursor.x = Math.min(160-8,cursor.x + 16);
+        if (phase != 'attackConfirm'){
+
+            cursor.x = Math.min(256-8,cursor.x + 16);
+            cursorPos = PostoTilePos([cursor.x,cursor.y]);
+            cursorTarget = charPosKeys[cursorPos]
+        }
     });
 
     this.input.keyboard.on('keydown_UP', function (event) {
-        cursor.y = Math.max(0+8,cursor.y-16);
+        if (phase != 'attackConfirm'){
+
+            cursor.y = Math.max(16+8,cursor.y-16);
+            cursorPos = PostoTilePos([cursor.x,cursor.y]);
+            cursorTarget = charPosKeys[cursorPos]
+        }
     });
 
     this.input.keyboard.on('keydown_DOWN', function (event) {
-        cursor.y = Math.min(160-8,cursor.y + 16);
+        if (phase != 'attackConfirm'){
+
+            cursor.y = Math.min(176-8,cursor.y + 16);
+            cursorPos = PostoTilePos([cursor.x,cursor.y]);
+            cursorTarget = charPosKeys[cursorPos]
+        }
     });
 
-    this.input.keyboard.on('keydown_ENTER', function(event){
+    this.input.keyboard.on('keydown_Z', function(event){
+        if(phase == 'choose'){
+            colorBlue.clear(true,true)
+            colorRed.clear(true,true)
+            if (cursorPos in charPosKeys){
+                charTarget = charPosKeys[cursorPos]
+                if((charTarget.name in activeQueue) || (charTarget.ally == false)){
+                    showMoves(charTarget)
+                    if (charTarget.ally == true){
+                        phase = 'move'
+                    }
+                }
+                    
+            }
+        }
+        else if(phase =='move'){
+            if (cursorPos in charTarget.moves){
+                colorBlue.clear(true,true)
+                colorRed.clear(true,true)
+                if (String(cursorPos) == String(charTarget.pos)){//Characted chose to stay in same tile
+                    phase = 'attackConfirm'
+                    base.scene.run('attackMenu')
+                    showAttacks(charTarget)
+                }
+                else{
+                    charTarget.moveto(PostoTilePos([cursor.x,cursor.y]))
+                    phase = 'moving'
+                }
 
-        // Chamomile.img.x = cursor.x
-        // Chamomile.img.y = cursor.y
+
+                
+            }
         
-        Chamomile.pos = PostoTilePos([cursor.x,cursor.y])
-        // Chamomile.moveto(Chamomile.pos)
-        tweenRef.add(tweenDown)
-    });
-    text = this.add.text(30, 20, '0', { font: '16px Courier', fill: '#00ff00' });
+        }
+        //Attack phase is started when animation for moving is complete
+        // else if(phase == 'attack'){
+        //     if (cursorPos in charPosKeys){
+        //         cursorTarget = charPosKeys[cursorPos]
+        //         if ( (cursorPos in charTarget.validattacks) && (cursorTarget.ally == false)){
 
+        //         }
+
+        //     }
+        //     else{
+        //         phase = 'choose'
+        //         charTarget.img.setTexture(charTarget.name + "Grayed")
+        //         delete activeQueue[charTarget.name]
+        //         colorBlue.clear(true,true)
+        //         colorRed.clear(true,true)
+        //         if (Object.keys(activeQueue).length == 0){
+        //             phase = 'enemy'
+        //         }
+                
+        //     }
+        // }
+    });
 }
 
 
@@ -287,12 +309,30 @@ function TilePostoPos(tilepos){
     return [tilepos[0]*16 + 8,tilepos[1]*16 + 8]
 }
 
-function getTileWeight(gridPos){
-    var absPos = TilePostoPos(gridPos)
-    if (layer.getTileAtWorldXY(absPos[0],absPos[1]) == null){
-        return 99
+//Use in between each turn. 
+function updateAllyTileWeights(){
+    //Recreate original weightmap
+    for (key in originalTileWeights){
+        allymovemap[key] = originalTileWeights[key]
     }
-    return layer.getTileAtWorldXY(absPos[0],absPos[1]).properties.weight
+    //Replace tileweight with 99 where enemies are standing
+    enemies.forEach(function(char){
+        if (char.hp){
+            allymovemap[char.pos] = 99    
+        }
+    })   
+}
+function updateEnemyTileWeights(){
+    //Recreate original weightmap
+    for (key in originalTileWeights){
+        enemymovemap[key] = originalTileWeights[key]
+    }
+    //Replace tileweight with 99 where enemies are standing
+    allies.forEach(function(char){
+        if(char.hp > 0){
+            enemymovemap[char.pos] = 99    
+        }
+    })   
 }
 
 function parseKey(key,delimiter){ //Parse through our custom ID tag to determine location of target box
@@ -316,7 +356,7 @@ function parseKey(key,delimiter){ //Parse through our custom ID tag to determine
 
 function showMoves(character){
     var possibleAttacks = {}
-    function findPath(start,mspd){ 
+    function findPath(start,mspd,map){ 
         //Flood fill algorithm to determine valid moves
         // updateAllyTileWeights() 
         //Create object Path that will eventually store the stepsLeft and a pathTaken to a tile
@@ -350,7 +390,7 @@ function showMoves(character){
             neighbors.forEach(function(neighbor){
                 possibleAttacks[neighbor] = 1
                 //Calculate how many steps are left if the neighbor is moved into
-                tentativeStepsLeft = travelmap[curr].stepsLeft - getTileWeight(neighbor)
+                tentativeStepsLeft = travelmap[curr].stepsLeft - map[neighbor]
                 //If we've already calculated this tile, only replace it in the travel map if it requires less steps
                 if (neighbor in travelmap){
                     if (tentativeStepsLeft > travelmap[neighbor].stepsLeft){
@@ -358,18 +398,18 @@ function showMoves(character){
                     }
                 }
                 //Otherwise if you do not have enough steps to move into neighbor do nothing
-                else if (travelmap[curr].stepsLeft - getTileWeight(neighbor) < 0){
+                else if (travelmap[curr].stepsLeft - map[neighbor] < 0){
                 }
                 //If you have exactly enough steps push it to the closedset
-                else if (travelmap[curr].stepsLeft - getTileWeight(neighbor) == 0){
-                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - getTileWeight(neighbor), travelmap[curr].pathTaken.concat([neighbor]))
+                else if (travelmap[curr].stepsLeft - map[neighbor] == 0){
+                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - map[neighbor], travelmap[curr].pathTaken.concat([neighbor]))
                     closedset.push(neighbor)
                 }
                 else{
                 //If the tile has not been previously calculated and it is possible to move into it with steps remaining
                 //Put that tile in the Open Set and log its Path in the map.
                     openset.push(neighbor)
-                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - getTileWeight(neighbor), travelmap[curr].pathTaken.concat([neighbor]))
+                    travelmap[neighbor] = new Path(travelmap[curr].stepsLeft - map[neighbor], travelmap[curr].pathTaken.concat([neighbor]))
                 }
             })
         }
@@ -385,7 +425,7 @@ function showMoves(character){
     }
 
     if (character.ally){
-        var possiblemoves = (findPath(character.pos,character.mspd))
+        var possiblemoves = (findPath(character.pos,character.mspd,allymovemap))
     }
     else{
         var possiblemoves = (findPath(character.pos,character.mspd,enemymovemap))
@@ -394,18 +434,17 @@ function showMoves(character){
     colorBlue.clear(true,true)
     colorRed.clear(true,true)
     for (var key in possiblemoves){
-        var correctedKey = key.slice(0,key.indexOf(',')) + '\\' + key.slice(key.indexOf(','))
+        var tile = TilePostoPos(parseKey(key,','))
         if (character.ally == false){
-            $('#'+correctedKey).addClass('enemyMovement')
+            colorRed.create(tile[0],tile[1],'colorRed')
         }
         else{
-            var tile = TilePostoPos(parseKey(key,','))
             colorBlue.create(tile[0],tile[1],'colorBlue')
         }
     }
     for (var key in possibleAttacks){
+        var tile = TilePostoPos(parseKey(key,','))
         if (!(key in possiblemoves)){
-            var tile = TilePostoPos(parseKey(key,','))
             colorRed.create(tile[0],tile[1],'colorRed')
         }
 
@@ -415,3 +454,28 @@ function showMoves(character){
     colorBlue.setDepth(-1)
     colorRed.setDepth(-1)
 }
+
+function showAttacks(character){
+    var possibleattacks = [[+character.pos[0] + 1, +character.pos[1]],[+character.pos[0] - 1, +character.pos[1]],
+                        [+character.pos[0] , +character.pos[1]+1],[+character.pos[0], +character.pos[1]-1]]
+        character.validattacks = {}
+        possibleattacks.forEach(function(tile){
+            if (tile in charPosKeys){
+                if (!charPosKeys[tile].ally){
+                    character.validattacks[tile] = charPosKeys[tile]
+                }
+            }
+            var absTile = TilePostoPos(tile)
+            colorRed.create(absTile[0],absTile[1],'colorRed')
+            colorRed.setDepth(-1)
+            })
+    
+}
+
+function removeChar(character){
+    delete charPosKeys[character.pos]
+    updateAllyTileWeights()
+    updateEnemyTileWeights()
+
+}
+
