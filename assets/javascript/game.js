@@ -104,10 +104,10 @@ charPosKeys[Earl.pos] = Earl
 var Ceylon = new Character('Ceylon',200,70,10,50,20,5,4,0,0,true, true, [3,1])
 charPosKeys[Ceylon.pos] = Ceylon
 
-var SpearSkeleton1 = new Character('Spear Skeleton',100,200,10,80,20,1,4,0,50,false, false, [4,1])
+var SpearSkeleton1 = new Character('Spear Skeleton',20,200,10,80,20,1,4,0,50,false, false, [4,1])
 charPosKeys[SpearSkeleton1.pos] = SpearSkeleton1
 
-var AxeSkeleton1 = new Character('Axe Skeleton',150,40,10,60,10,1,4,0,50,false, false, [3,2])
+var AxeSkeleton1 = new Character('Axe Skeleton',30,40,10,60,10,1,4,0,50,false, false, [3,2])
 charPosKeys[AxeSkeleton1.pos] = AxeSkeleton1
 
 

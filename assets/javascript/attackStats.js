@@ -16,6 +16,9 @@ var attackStats = new Phaser.Class({
 
     create: function(){
         var _this = this;
+        var healthNodes = {}
+        var enemyNodes = {}
+
 
         function updateCursorPos(){
             cursorPos = choiceArray[pointer].pos
@@ -23,17 +26,24 @@ var attackStats = new Phaser.Class({
             cursor.x = cursorPosAbs[0]
             cursor.y = cursorPosAbs[1]
         }
-        function updateText(){
+        function updateStats(){
             ally.setText('HP ' + charTarget.hp + '\t\tAtk ' + charTarget.atk+ '\nHit ' + charTarget.acc + '\t\t\t\tCrt ' + charTarget.crt)
             enemy.setText('HP ' + choiceArray[pointer].hp + '\t\tAtk ' + choiceArray[pointer].atk+ '\nHit ' + choiceArray[pointer].acc + '\t\t\t\tCrt ' + choiceArray[pointer].crt)
+            
         }
-        var healthNodes = {}
-        for (var i = 0; i<33;i++){
-            healthNodes[i] = this.add.image(16+3*i,118,'HealthNode').setDepth(1)
-        }
-        var enemyNodes = {}
-        for (var i = 0; i<33;i++){
-            enemyNodes[i] = this.add.image(128+3*i,118,'HealthNode').setDepth(1)
+
+        function updateHealth(){
+            for( key in enemyNodes){
+                enemyNodes[key].destroy()
+                delete enemyNodes[key]
+            }
+
+            for (var i = 0; i<33;i++){
+                healthNodes[i] = _this.add.image(16+3*i,118,'HealthNode').setDepth(1)
+            }
+            for (var i = 0; i<=choiceArray[pointer].hp;i++){
+                enemyNodes[i] = _this.add.image(128+3*i,118,'HealthNode').setDepth(1)
+            }
         }
 
 
@@ -52,14 +62,16 @@ var attackStats = new Phaser.Class({
         var enemy = this.add.text(126,127,'',{fontFamily: 'Arial',fontSize: '8px',color: '#f4f6f7' })
         
         updateCursorPos()
-        updateText()
+        updateStats()
+        updateHealth()
 
         this.input.keyboard.on('keydown_LEFT', function(event){
             if (anim == false){
                 pointer--;
                 if (pointer < 0){pointer = choiceArray.length - 1};
                 updateCursorPos()
-                updateText()
+                updateStats()
+                updateHealth()
             }
         })
         this.input.keyboard.on('keydown_RIGHT',function(event){
@@ -67,7 +79,8 @@ var attackStats = new Phaser.Class({
                 pointer++;
                 if(pointer >= choiceArray.length){pointer = 0};
                 updateCursorPos()
-                updateText()
+                updateStats()
+                updateHealth()
             }
         })
         
@@ -75,6 +88,9 @@ var attackStats = new Phaser.Class({
             if (anim == false){
                 anim = true
                 function attack(self,target){
+                    var selfInitHP = self.hp
+                    var targetInitHP = target.hp
+
                     var selfAlive = true;
                     var targetAlive = true;
                 
@@ -114,15 +130,28 @@ var attackStats = new Phaser.Class({
                     //Attack logic
                     //Initial attack animations(can probably turn this into a function)
                     function checkSelfAlive(){
-                        updateText()
+                        updateStats()
                         if (!selfAlive){
                             self.img.destroy()
                         }
                     }
                 
                     function checkTargetAlive(){
+                        if(hitSuccess){
+                            function removeTick(currentHP){
+                                if (currentHP >= target.hp){
+                                    enemyNodes[currentHP].destroy()
+                                    delete enemyNodes[currentHP]
+                                    setTimeout(function(){
+                                        removeTick(currentHP-1)
+                                    },20)
+                                }
+                            }    
+                            removeTick(targetInitHP);
+                            updateStats();
+                        }
+
                         if (!targetAlive){
-                            updateText();
                             target.img.destroy();
                         }
                     }
@@ -165,7 +194,7 @@ var attackStats = new Phaser.Class({
                             if(targetAlive){
                                 setTimeout(function(){
                                     targetTimeline.play()
-                                },300)
+                                },600)
                             }
                             else{
                                 setTimeout(function(){
@@ -174,7 +203,7 @@ var attackStats = new Phaser.Class({
                                     charTarget.img.setTexture(charTarget.name + 'Grayed')
                                     colorRed.clear(true,true)
                                     phase = 'choose'
-                                },300)
+                                },600)
                             }
                         }})
                 
