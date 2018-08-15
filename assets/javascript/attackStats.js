@@ -15,6 +15,7 @@ var attackStats = new Phaser.Class({
     },
 
     create: function(){
+        console.log('attackStats')
         var _this = this;
         var healthNodes = {}
         var enemyNodes = {}
@@ -38,11 +39,16 @@ var attackStats = new Phaser.Class({
                 delete enemyNodes[key]
             }
 
-            for (var i = 0; i<33;i++){
-                healthNodes[i] = _this.add.image(16+3*i,118,'HealthNode').setDepth(1)
+            for( key in healthNodes){
+                healthNodes[key].destroy()
+                delete healthNodes[key]
             }
-            for (var i = 0; i<=choiceArray[pointer].hp;i++){
-                enemyNodes[i] = _this.add.image(128+3*i,118,'HealthNode').setDepth(1)
+
+            for (var i = 1; i<=charTarget.hp;i++){
+                healthNodes[i] = _this.add.image(16+3*i-3,118,'HealthNode').setDepth(1)
+            }
+            for (var i = 1; i<=choiceArray[pointer].hp;i++){
+                enemyNodes[i] = _this.add.image(128+3*i-3,118,'HealthNode').setDepth(1)
             }
         }
 
@@ -130,7 +136,20 @@ var attackStats = new Phaser.Class({
                     //Attack logic
                     //Initial attack animations(can probably turn this into a function)
                     function checkSelfAlive(){
-                        updateStats()
+                        if(targetHitSuccess){
+                            console.log('hi')
+                            function removeTick(currentHP){
+                                if (currentHP >= self.hp){
+                                    healthNodes[currentHP].destroy()
+                                    delete healthNodes[currentHP]
+                                    setTimeout(function(){
+                                        removeTick(currentHP-1)
+                                    },20)
+                                }
+                            }    
+                        removeTick(selfInitHP);
+                        updateStats();
+                        }
                         if (!selfAlive){
                             self.img.destroy()
                         }
@@ -139,7 +158,7 @@ var attackStats = new Phaser.Class({
                     function checkTargetAlive(){
                         if(hitSuccess){
                             function removeTick(currentHP){
-                                if (currentHP >= target.hp){
+                                if (currentHP > target.hp){
                                     enemyNodes[currentHP].destroy()
                                     delete enemyNodes[currentHP]
                                     setTimeout(function(){
@@ -225,7 +244,7 @@ var attackStats = new Phaser.Class({
                                 else{
                                     removeChar(self)
                                 }
-                            },300)
+                            },600)
                            
                         }})
                 

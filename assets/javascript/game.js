@@ -4,9 +4,9 @@ var config = {
     height: 160,
     pixelArt: true,
     backgroundColor: '#2d2d2d',
-    scene: [{
+    scene: [characterMenu,{
         key: 'main',
-        active: true,
+        // active: true,
         preload: preload,
         create: create,
         update: update,
@@ -95,13 +95,13 @@ var charPosKeys = {}
 
 //name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos
 
-var Chamomile = new Character('Chamomile',100,200,10,90,20,15,4,0,0,true, true, [1,1])
+var Chamomile = new Character('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1])
 charPosKeys[Chamomile.pos] = Chamomile
 
-var Earl = new Character('Earl',120,30,20,80,20,10,4,0,0,true, true, [2,1])
+var Earl = new Character('Earl',24,30,20,80,20,10,4,0,0,true, true, [2,1])
 charPosKeys[Earl.pos] = Earl
 
-var Ceylon = new Character('Ceylon',200,70,10,50,20,5,4,0,0,true, true, [3,1])
+var Ceylon = new Character('Ceylon',33,70,10,50,20,5,4,0,0,true, true, [3,1])
 charPosKeys[Ceylon.pos] = Ceylon
 
 var SpearSkeleton1 = new Character('Spear Skeleton',20,200,10,80,20,1,4,0,50,false, false, [4,1])
