@@ -13,7 +13,7 @@ var config = {
     },attackMenu,attackStats]
 };
 
-function Character(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
+function Character(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos,portrait ) {
     this.name = name;
     this.hp = hp;
     this.atk = atk;
@@ -33,6 +33,8 @@ function Character(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos
     
     this.active = active;
     this.pos = pos;
+
+    this.portrait = portrait;
 
     this.levelup = function(){
         //Increases stats, called after the player reaches 100 exp
@@ -95,7 +97,7 @@ var charPosKeys = {}
 
 //name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos
 
-var Chamomile = new Character('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1])
+var Chamomile = new Character('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1],'assets/images/Sprites/PortraitPlaceholder.png')
 charPosKeys[Chamomile.pos] = Chamomile
 
 var Earl = new Character('Earl',24,30,20,80,20,10,4,0,0,true, true, [2,1])
