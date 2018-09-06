@@ -16,7 +16,7 @@ var characterMenu = new Phaser.Class({
     create: function(){
         
         var background = this.add.image(120,80,'CharacterMenu')
-        var portrait = this.add.image(50,50,'Portrait')
+        var portrait = this.add.image(56,54,'Portrait')
     }
 
 })

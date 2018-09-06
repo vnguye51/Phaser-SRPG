@@ -4,7 +4,7 @@ var config = {
     height: 160,
     pixelArt: true,
     backgroundColor: '#2d2d2d',
-    scene: [characterMenu,{
+    scene: [menu,characterMenu,{
         key: 'main',
         // active: true,
         preload: preload,
