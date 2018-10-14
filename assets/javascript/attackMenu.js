@@ -25,9 +25,9 @@ var attackMenu = new Phaser.Class({
         
 
     
-        var wait = this.add.text(186,32,'Wait',{fontFamily: 'Arial',fontSize: '8px',color: '#ffffff' })
+        var wait = this.add.text(186,32,'Wait',{fontFamily: 'Arial',fontSize: '10px',color: '#ffffff' })
         wait.id = 1
-        var attack = this.add.text(186,16,'Attack',{fontFamily: 'Arial',fontSize: '8px',color: '#00ff00' })
+        var attack = this.add.text(186,16,'Attack',{fontFamily: 'Arial',fontSize: '10px',color: '#00ff00' })
         attack.id = 0
         console.log(wait)
         // var shelter = this.add.text(186,48,'Rescue',{fontFamily: 'Arial',fontSize: '8px', color: '#ffffff'})

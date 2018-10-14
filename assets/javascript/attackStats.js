@@ -65,8 +65,8 @@ var attackStats = new Phaser.Class({
         })
 
 
-        var ally = this.add.text(14,127,'',{fontFamily: 'Arial',fontSize: '8px',color: '#f4f6f7'})
-        var enemy = this.add.text(126,127,'',{fontFamily: 'Arial',fontSize: '8px',color: '#f4f6f7' })
+        var ally = this.add.text(14,127,'',{fontFamily: 'Arial',fontSize: '10px',color: '#f4f6f7'})
+        var enemy = this.add.text(126,127,'',{fontFamily: 'Arial',fontSize: '10px',color: '#f4f6f7' })
         
         updateCursorPos()
         updateStats()
@@ -211,6 +211,10 @@ var attackStats = new Phaser.Class({
                         targets: self.img,
                         tweens: tweens,
                         onComplete: function(){
+                            if(enemies.every((enemy)=>{return enemy.hp <= 0})){
+                                base.add.text(80,80,'VICTORY',{fontFamily: 'Arial',fontSize: '24px',color: '#f4f6f7'})
+                                return
+                            }
                             if(targetAlive){
                                 setTimeout(function(){
                                     targetTimeline.play()
@@ -233,6 +237,10 @@ var attackStats = new Phaser.Class({
                         tweens: targettweens,
                         onComplete: function(){
                             setTimeout(function(){
+                                if(allies.every((ally)=>{return ally.hp <= 0})){
+                                    base.add.text(80,80,'DEFEAT',{fontFamily: 'Arial',fontSize: '24px',color: '#f4f6f7'})
+                                    return
+                                }
                                 delete activeQueue[charTarget.name]
                                 phase = 'choose'
                                 colorRed.clear(true,true)

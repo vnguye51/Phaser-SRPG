@@ -4,14 +4,13 @@ var config = {
     height: 160,
     pixelArt: true,
     backgroundColor: '#2d2d2d',
-    parent: 'phaser-example',
     scene: [{
         key: 'main',
         // active: true,
         preload: preload,
         create: create,
         update: update,
-    },attackMenu,attackStats,characterMenu]
+    },attackMenu,attackStats,enemyAttackStats,characterMenu]
 };
 
 
@@ -52,41 +51,44 @@ function Enemy(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
     }
 
     this.moveto = function(target,path){ 
-        delete charPosKeys[this.pos]
-        console.log(path)
-        var tweens = []
-        var prev = this.pos
-        
-        for(var i = 0;i<path.length;i++){
-            if(prev[0]-1 == path[i][0]){
-                tweens.push({x: '-=16',duration:200,ease:'linear'})
+        if(path.length){
+            delete charPosKeys[this.pos]
+            console.log(path)
+            var tweens = []
+            var prev = this.pos
+            
+            for(var i = 0;i<path.length;i++){
+                if(prev[0]-1 == path[i][0]){
+                    tweens.push({x: '-=16',duration:200,ease:'linear'})
+                }
+                else if (prev[0]+1 == path[i][0]){
+                    tweens.push({x: '+=16',duration:200,ease:'linear'})
+                }
+                else if (prev[1]+1 == path[i][1]){
+                    tweens.push({y: '+=16',duration:200,ease:'linear'})
+                }
+                else if (prev[1]-1 == path[i][1]){
+                    tweens.push({y: '-=16',duration:200,ease:'linear'})
+                }
+                prev = path[i]
             }
-            else if (prev[0]+1 == path[i][0]){
-                tweens.push({x: '+=16',duration:200,ease:'linear'})
-            }
-            else if (prev[1]+1 == path[i][1]){
-                tweens.push({y: '+=16',duration:200,ease:'linear'})
-            }
-            else if (prev[1]-1 == path[i][1]){
-                tweens.push({y: '-=16',duration:200,ease:'linear'})
-            }
-            prev = path[i]
-        }
-        var timeline = base.tweens.timeline({
-            targets: this.img,
-            tweens: tweens,
-            // onComplete: function(){
-                // phase = 'attackConfirm'
-                // base.scene.run('attackMenu')
-                // showAttacks(charTarget)
-
-            // }
-        })      
-        this.pos = [path[path.length-1][0],path[path.length-1][1]]
-        charPosKeys[this.pos] = this // Store a reference to this object on that tile
-
-
-    };
+            var timeline = base.tweens.timeline({
+                targets: this.img,
+                tweens: tweens,
+                // onComplete: function(){
+                    // phase = 'attackConfirm'
+                    // base.scene.run('attackMenu')
+                    // showAttacks(charTarget)
+    
+                // }
+            })      
+            this.pos = [path[path.length-1][0],path[path.length-1][1]]
+            charPosKeys[this.pos] = this // Store a reference to this object on that tile
+    
+    
+        };           
+    }
+       
 }
 
 
@@ -112,7 +114,6 @@ function Ally(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
     this.active = active;
     this.pos = pos;
 
-    this.portrait = portrait;
 
     this.levelup = function(){
         //Increases stats, called after the player reaches 100 exp
@@ -233,6 +234,10 @@ var charTarget //Last selected character
 var originalTileWeights = {}
 var allymovemap = {} //Tileweights, Store the steps needed to move into a tile in a map
 var enemymovemap = {}
+
+var currentEnemy //the enemy who is currently taking his turn
+var currentEnemyIndex
+var currentEnemyTarget //the player the enemy is trying to attack
 
 var game = new Phaser.Game(config);
 
@@ -423,6 +428,7 @@ function create(){
 
 
 function update (){
+    console.log(cursorPos,cursor.x,cursor.y)
 }
 
 

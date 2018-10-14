@@ -77,42 +77,50 @@ function shortestPath(start,target){
     }
 }
 
+
+
+
 function bestMove(enemy){
     var minDistance = 999
     var bestTile = enemy.pos
-    var bestTarget = null
     var bestPath = null
     var bestPathIndex = 0
-    var tempIndex = 0
+    var tempIndex = -1
+    var canAttack = false
     for(var i = 0;i<allies.length;i++){
-        var targetPos = allies[i].pos
-        var path = shortestPath(enemy.pos,targetPos)
-        var stepsTaken = 0
-        var lastTile = enemy.pos
-        for (var j = 0; j < path.length; j++){
-            stepsTaken += enemymovemap[path[j]]
-            if (stepsTaken <= enemy.mspd){
-                if(enemies.every(function(enemy){return indexOfa2Ina1([enemy.pos],[path[j]]) == -1})){
-                    lastTile = path[j]
-                    tempIndex = j
-
+        if(allies[i].hp > 0){
+            var targetPos = allies[i].pos
+            var path = shortestPath(enemy.pos,targetPos)
+            var stepsTaken = 0
+            var lastTile = enemy.pos
+            for (var j = 0; j < path.length; j++){
+                stepsTaken += enemymovemap[path[j]]
+                // console.log(path[j],enemymovemap[path[j]])
+                if (stepsTaken <= enemy.mspd){
+                    // console.log(stepsTaken)
+                    if(enemies.every(function(enemy){return indexOfa2Ina1([enemy.pos],[path[j]]) == -1})){
+                        lastTile = path[j]
+                        tempIndex = j
+    
+                    }
                 }
             }
-        }
-        if (stepsTaken < minDistance){
-            minDistance = stepsTaken
-            bestTile = lastTile
-            bestPathIndex = tempIndex
-            bestPath = path.slice(0,bestPathIndex+1)
-            
-            if ((Math.abs(targetPos[0] - bestTile[0])+Math.abs(targetPos[1] - bestTile[1])) <= 1){
-                bestTarget = allies[i]
+            if (stepsTaken < minDistance){
+                minDistance = stepsTaken
+                bestTile = lastTile
+                bestPathIndex = tempIndex
+                tempIndex = -1
+                bestPath = path.slice(0,bestPathIndex+1)
+                if ((Math.abs(targetPos[0] - bestTile[0])+Math.abs(targetPos[1] - bestTile[1])) <= 1){
+                    currentEnemyTarget = allies[i]
+                    canAttack = true
+                }
             }
         }
     }
     
     // animateMove(enemy,bestPath)
-    enemy.moveto(bestTile,bestPath)
+    moveTo(enemy,canAttack,bestPath,currentEnemyIndex)
     // $(enemy.ref).promise().done(function(){
     //     enemy.moveto(bestTile[0],bestTile[1])
     //     if (bestTarget != null){
@@ -124,16 +132,71 @@ function bestMove(enemy){
    
 }
 
+
+function moveTo(enemy,canAttack,path){
+    currentEnemy=enemy
+    if(path.length){
+        delete charPosKeys[enemy.pos]
+        var tweens = []
+        var prev = enemy.pos
+        
+        for(var i = 0;i<path.length;i++){
+            if(prev[0]-1 == path[i][0]){
+                tweens.push({x: '-=16',duration:200,ease:'linear'})
+            }
+            else if (prev[0]+1 == path[i][0]){
+                tweens.push({x: '+=16',duration:200,ease:'linear'})
+            }
+            else if (prev[1]+1 == path[i][1]){
+                tweens.push({y: '+=16',duration:200,ease:'linear'})
+            }
+            else if (prev[1]-1 == path[i][1]){
+                tweens.push({y: '-=16',duration:200,ease:'linear'})
+            }
+            prev = path[i]
+        }
+    
+        enemy.pos = [path[path.length-1][0],path[path.length-1][1]]
+        charPosKeys[enemy.pos] = enemy // Store a reference to this object on that tile
+        var timeline = base.tweens.timeline({
+            targets: enemy.img,
+            tweens: tweens,
+            onComplete: function(){
+                if(canAttack){
+                    base.scene.run('enemyAttackStats')
+                }
+            }
+        })  
+    } 
+    else{
+        base.scene.run('enemyAttackStats')
+    }
+}
+
+function queueNextEnemy(){
+    if(enemies.length-1 <= currentEnemyIndex){
+        updateAllyTileWeights()
+        setTimeout(function(){
+            phase = 'choose'
+        },500) 
+        return               
+    }
+    while(enemies.length-1 > currentEnemyIndex){
+        currentEnemyIndex += 1
+        if (enemies[currentEnemyIndex] && enemies[currentEnemyIndex].hp<=0){
+            currentEnemyIndex += 1
+        }
+    }
+    bestMove(enemies[currentEnemyIndex],currentEnemyIndex)
+}
+
 function enemyTurn(){
     //ENEMY TURN
-
     // printLabel('ENEMY PHASE')
+    currentEnemyIndex = 0
     updateEnemyTileWeights()
-    enemies.forEach(function(enemy){
-        if(enemy.hp >= 0){
-            bestMove(enemy)
-        }
-    })
+    rebuildActiveQueue()
+    bestMove(enemies[currentEnemyIndex],currentEnemyIndex)
 
     // function moveNext(i){
     //     //Wait for each enemy to finish moving before moving onto the next enemy
@@ -151,13 +214,7 @@ function enemyTurn(){
         
     // }
     
-    updateAllyTileWeights()
-    setTimeout(function(){
-        console.log('rebuilding active queue')
-        rebuildActiveQueue()
-        phase = 'choose'
-    },500)
-    
+
 }
 
 function indexOfa2Ina1(a1,a2){
