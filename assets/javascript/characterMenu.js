@@ -10,12 +10,13 @@ var characterMenu = new Phaser.Class({
 
     preload: function(){
         this.load.image('CharacterMenu','assets/images/Menus/CharacterMenu.png')
-        
+        this.load.image('Portrait',Chamomile.portrait)
     },
 
     create: function(){
-        console.log('characterMenu')
+        
         var background = this.add.image(120,80,'CharacterMenu')
+        var portrait = this.add.image(56,54,'Portrait')
     }
 
 })

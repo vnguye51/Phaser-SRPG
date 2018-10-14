@@ -1,3 +1,11 @@
+mysql - use to pull aggregate game data from users and balancing/ranking?
+express - server communication
+react - ??
+node - logic is contained in node
+
+things to do now: set up complete game logic and menus, etc.
+
+
 Game Logic
 * Player chooses a character. All characters EXCEPT the one chosen are part of the player's team
 	* ALl characters have these stats.
