@@ -4,16 +4,94 @@ var config = {
     height: 160,
     pixelArt: true,
     backgroundColor: '#2d2d2d',
-    scene: [characterMenu,{
+    parent: 'phaser-example',
+    scene: [{
         key: 'main',
         // active: true,
         preload: preload,
         create: create,
         update: update,
-    },attackMenu,attackStats]
+    },attackMenu,attackStats,characterMenu]
 };
 
-function Character(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
+
+function Enemy(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
+    this.name = name;
+    this.hp = hp;
+    this.atk = atk;
+    this.def = def;
+    this.acc = acc;
+    this.avo = avo;//unused so far
+    this.crt = crit
+
+    this.mspd = mspd;
+    this.moves = null;
+
+    this.validattacks = null;
+    this.exp = exp;
+    this.giveexp = giveexp;
+    this.ally = ally;
+
+    
+    this.active = active;
+    this.pos = pos;
+
+    this.levelup = function(){
+        //Increases stats, called after the player reaches 100 exp
+        setTimeout(function(){
+            levelUpSound.play();
+            printLabel("LEVEL UP")
+        },1000)
+        
+        printMessage(this.name + " leveled up!" )
+        this.acc += 10
+        this.avo += 10
+        this.mspd += 1
+        this.ap += 10
+        this.exp -= 100
+    }
+
+    this.moveto = function(target,path){ 
+        delete charPosKeys[this.pos]
+        console.log(path)
+        var tweens = []
+        var prev = this.pos
+        
+        for(var i = 0;i<path.length;i++){
+            if(prev[0]-1 == path[i][0]){
+                tweens.push({x: '-=16',duration:200,ease:'linear'})
+            }
+            else if (prev[0]+1 == path[i][0]){
+                tweens.push({x: '+=16',duration:200,ease:'linear'})
+            }
+            else if (prev[1]+1 == path[i][1]){
+                tweens.push({y: '+=16',duration:200,ease:'linear'})
+            }
+            else if (prev[1]-1 == path[i][1]){
+                tweens.push({y: '-=16',duration:200,ease:'linear'})
+            }
+            prev = path[i]
+        }
+        var timeline = base.tweens.timeline({
+            targets: this.img,
+            tweens: tweens,
+            // onComplete: function(){
+                // phase = 'attackConfirm'
+                // base.scene.run('attackMenu')
+                // showAttacks(charTarget)
+
+            // }
+        })      
+        this.pos = [path[path.length-1][0],path[path.length-1][1]]
+        charPosKeys[this.pos] = this // Store a reference to this object on that tile
+
+
+    };
+}
+
+
+
+function Ally(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
     this.name = name;
     this.hp = hp;
     this.atk = atk;
@@ -95,30 +173,44 @@ var charPosKeys = {}
 
 //name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos
 
-var Chamomile = new Character('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1])
+var Chamomile = new Ally('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1])
 charPosKeys[Chamomile.pos] = Chamomile
 
-var Earl = new Character('Earl',24,30,20,80,20,10,4,0,0,true, true, [2,1])
+var Earl = new Ally('Earl',24,30,20,80,20,10,4,0,0,true, true, [2,1])
 charPosKeys[Earl.pos] = Earl
 
-var Ceylon = new Character('Ceylon',33,70,10,50,20,5,4,0,0,true, true, [3,1])
+var Ceylon = new Ally('Ceylon',33,70,10,50,20,5,4,0,0,true, true, [3,1])
 charPosKeys[Ceylon.pos] = Ceylon
 
-var SpearSkeleton1 = new Character('Spear Skeleton',20,200,10,80,20,1,4,0,50,false, false, [4,1])
+var SpearSkeleton1 = new Enemy('SpearSkeleton',20,200,10,80,20,1,4,0,50,false, false, [4,1])
 charPosKeys[SpearSkeleton1.pos] = SpearSkeleton1
 
-var AxeSkeleton1 = new Character('Axe Skeleton',30,40,10,60,10,1,4,0,50,false, false, [3,2])
+var AxeSkeleton1 = new Enemy('AxeSkeleton',30,40,10,60,10,1,4,0,50,false, false, [3,2])
 charPosKeys[AxeSkeleton1.pos] = AxeSkeleton1
 
 
 
-var game = new Phaser.Game(config);
 var allies = [Chamomile,Earl,Ceylon]
 var enemies = [SpearSkeleton1,AxeSkeleton1]
 var activeQueue = {}
-for (var i = 0;i<allies.length;i++){
-    activeQueue[(allies[i].name)] = 1
+var enemyActiveQueue = {}
+function rebuildActiveQueue(){
+    for (var i = 0;i<allies.length;i++){
+        if(allies[i].hp > 0){
+            activeQueue[(allies[i].name)] = 1
+            allies[i].img.setTexture(allies[i].name)
+        }
+    }
 }
+function rebuildEnemyQueue(){
+    for (var i = 0;i<enemies.length;i++){
+        if(enemies[i].hp > 0){
+            enemyActiveQueue[(enemies[i].name)] = 1
+            enemies[i].img.setTexture(enemies[i].name)
+        }
+    }
+}
+
 var phase = 'choose'
 
 
@@ -139,6 +231,34 @@ var charTarget //Last selected character
 var originalTileWeights = {}
 var allymovemap = {} //Tileweights, Store the steps needed to move into a tile in a map
 var enemymovemap = {}
+
+var game = new Phaser.Game(config);
+
+function resize() {
+    var w = window.innerWidth;
+    var h = window.innerHeight;
+    var scale = Math.min(w / config.width, h / config.height);
+    
+    game.canvas.setAttribute('style',
+        ' -ms-transform: scale(' + scale + '); -webkit-transform: scale3d(' + scale + ', 1);' +
+        ' -moz-transform: scale(' + scale + '); -o-transform: scale(' + scale + '); transform: scale(' + scale + ');' +
+        ' transform-origin: top left;   image-rendering: -moz-crisp-edges;image-rendering: -webkit-crisp-edges;image-rendering: pixelated;image-rendering: crisp-edges;'
+    );
+    
+    width = w / scale;
+    height = h / scale;
+    game.resize(width, height);
+    game.scene.scenes.forEach(function (scene) {
+        scene.cameras.main.setViewport(0, 0, width, height);
+    });
+}
+
+window.addEventListener('resize', resize);
+if(game.isBooted) resize();
+else game.events.once('boot', resize);
+
+resize()
+
 
 function preload(){
     this.load.image('Tileset', 'assets/TileMap/Tileset.png');
@@ -161,6 +281,7 @@ function preload(){
 }
 
 function create(){
+
     //Launch parallel scenes(menus) and immediately hide them
 
     //CAMERA//
@@ -190,6 +311,9 @@ function create(){
     SpearSkeleton1.img = this.add.sprite(72,24,'SpearSkeleton')
     AxeSkeleton1.img = this.add.sprite(56,40,'AxeSkeleton')
 
+
+    rebuildActiveQueue()
+    rebuildEnemyQueue()
 
     ///Grab original tile data from JSON
     var tiles = layer.layer.data
@@ -474,8 +598,8 @@ function showAttacks(character){
 
 function removeChar(character){
     delete charPosKeys[character.pos]
+    
     updateAllyTileWeights()
     updateEnemyTileWeights()
 
 }
-

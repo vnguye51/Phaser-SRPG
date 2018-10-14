@@ -64,6 +64,7 @@ var attackStats = new Phaser.Class({
             return charTarget.validattacks[key]
         })
 
+
         var ally = this.add.text(14,127,'',{fontFamily: 'Arial',fontSize: '8px',color: '#f4f6f7'})
         var enemy = this.add.text(126,127,'',{fontFamily: 'Arial',fontSize: '8px',color: '#f4f6f7' })
         
@@ -232,11 +233,13 @@ var attackStats = new Phaser.Class({
                         tweens: targettweens,
                         onComplete: function(){
                             setTimeout(function(){
-                                _this.scene.stop('attackStats')
+                                delete activeQueue[charTarget.name]
                                 phase = 'choose'
                                 colorRed.clear(true,true)
                                 if (Object.keys(activeQueue).length == 0){
+                                    console.log('enemy turn!')
                                     phase = 'enemy'
+                                    enemyTurn()
                                 }
                                 if (selfAlive){
                                     charTarget.img.setTexture(charTarget.name + 'Grayed')
@@ -244,6 +247,7 @@ var attackStats = new Phaser.Class({
                                 else{
                                     removeChar(self)
                                 }
+                                _this.scene.stop('attackStats')
                             },600)
                            
                         }})
