@@ -4,12 +4,8 @@ var config = {
     height: 160,
     pixelArt: true,
     backgroundColor: '#2d2d2d',
-<<<<<<< HEAD
     parent: 'phaser-example',
     scene: [{
-=======
-    scene: [menu,characterMenu,{
->>>>>>> aa6d364d8002ac9fd91c655f7cf157b3600b25be
         key: 'main',
         // active: true,
         preload: preload,
@@ -18,7 +14,6 @@ var config = {
     },attackMenu,attackStats,characterMenu]
 };
 
-<<<<<<< HEAD
 
 function Enemy(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
     this.name = name;
@@ -97,9 +92,6 @@ function Enemy(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
 
 
 function Ally(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos) {
-=======
-function Character(name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos,portrait ) {
->>>>>>> aa6d364d8002ac9fd91c655f7cf157b3600b25be
     this.name = name;
     this.hp = hp;
     this.atk = atk;
@@ -183,11 +175,7 @@ var charPosKeys = {}
 
 //name,hp,atk,def,acc,avo,crit,mspd,exp,giveexp,ally,active,pos
 
-<<<<<<< HEAD
 var Chamomile = new Ally('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1])
-=======
-var Chamomile = new Character('Chamomile',20,200,10,90,20,15,4,0,0,true, true, [1,1],'assets/images/Sprites/PortraitPlaceholder.png')
->>>>>>> aa6d364d8002ac9fd91c655f7cf157b3600b25be
 charPosKeys[Chamomile.pos] = Chamomile
 
 var Earl = new Ally('Earl',24,30,20,80,20,10,4,0,0,true, true, [2,1])
